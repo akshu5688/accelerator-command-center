@@ -10,6 +10,12 @@ import Cohorts from "@/pages/accelerator/Cohorts";
 import StartupProfile from "@/pages/accelerator/StartupProfile";
 import Templates from "@/pages/accelerator/Templates";
 import Settings from "@/pages/accelerator/Settings";
+import ApplicationsHub from "@/pages/accelerator/applications/ApplicationsHub";
+import FormsIndex from "@/pages/accelerator/applications/FormsIndex";
+import FormBuilder from "@/pages/accelerator/applications/FormBuilder";
+import FormResponses from "@/pages/accelerator/applications/FormResponses";
+import Pipeline from "@/pages/accelerator/applications/Pipeline";
+import ApplicationReview from "@/pages/accelerator/applications/ApplicationReview";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,6 +33,14 @@ const App = () => (
               <Route path="dashboard" element={<AcceleratorDashboard />} />
               <Route path="cohorts" element={<Cohorts />} />
               <Route path="cohorts/:cohortId/:startupId" element={<StartupProfile />} />
+              <Route path="applications" element={<ApplicationsHub />}>
+                <Route index element={<FormsIndex />} />
+                <Route path="forms" element={<FormsIndex />} />
+                <Route path="forms/:formId/builder" element={<FormBuilder />} />
+                <Route path="forms/:formId/responses" element={<FormResponses />} />
+                <Route path="pipeline" element={<Pipeline />} />
+                <Route path="application/:applicationId" element={<ApplicationReview />} />
+              </Route>
               <Route path="templates" element={<Templates />} />
               <Route path="settings" element={<Settings />} />
             </Route>
