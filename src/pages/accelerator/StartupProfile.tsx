@@ -287,12 +287,6 @@ export default function StartupProfile() {
             </Dialog>
           )}
 
-          {role === "founder" && (
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 border border-dashed">
-              <Lock className="h-4 w-4 text-muted-foreground" />
-              <span className="text-xs text-muted-foreground">Internal review notes are not visible to founders</span>
-            </div>
-          )}
 
           <Card className="shadow-sm">
             <Table>

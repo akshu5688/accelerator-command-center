@@ -95,7 +95,6 @@ export default function Settings() {
                         <SelectItem value="admin">Admin</SelectItem>
                         <SelectItem value="program_manager">Program Manager</SelectItem>
                         <SelectItem value="mentor">Mentor</SelectItem>
-                        <SelectItem value="founder">Founder</SelectItem>
                       </SelectContent>
                     </Select>
                   </TableCell>

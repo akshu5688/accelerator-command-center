@@ -11,7 +11,6 @@ const roles: { value: UserRole; label: string }[] = [
   { value: "admin", label: "Admin" },
   { value: "program_manager", label: "Program Manager" },
   { value: "mentor", label: "Mentor" },
-  { value: "founder", label: "Founder" },
 ];
 
 export function RoleSwitcher() {

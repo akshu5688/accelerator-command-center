@@ -40,7 +40,7 @@ const severityColor: Record<string, string> = {
 
 export default function AcceleratorDashboard() {
   const { role } = useRole();
-  const isLimited = role === "founder" || role === "mentor";
+  const isLimited = role === "mentor";
 
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto">

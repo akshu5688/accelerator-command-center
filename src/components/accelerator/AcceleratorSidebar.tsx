@@ -24,9 +24,9 @@ import {
 } from "@/components/ui/sidebar";
 
 const navItems = [
-  { title: "Dashboard", url: "/accelerator/dashboard", icon: LayoutDashboard, roles: ["admin", "program_manager", "mentor", "founder"] as const },
+  { title: "Dashboard", url: "/accelerator/dashboard", icon: LayoutDashboard, roles: ["admin", "program_manager", "mentor"] as const },
   { title: "Cohorts", url: "/accelerator/cohorts", icon: Users, roles: ["admin", "program_manager", "mentor"] as const },
-  { title: "Applications", url: "/accelerator/applications", icon: Inbox, roles: ["admin", "program_manager", "mentor"] as const },
+  { title: "Applications", url: "/accelerator/applications", icon: Inbox, roles: ["admin", "program_manager"] as const },
   { title: "Templates", url: "/accelerator/templates", icon: FileText, roles: ["admin", "program_manager"] as const },
   { title: "Settings", url: "/accelerator/settings", icon: Settings, roles: ["admin"] as const },
 ];

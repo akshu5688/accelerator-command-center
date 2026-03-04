@@ -8,7 +8,6 @@ const roleLabels: Record<string, string> = {
   admin: "Admin",
   program_manager: "Program Manager",
   mentor: "Mentor",
-  founder: "Founder",
 };
 
 export function AcceleratorLayout() {
