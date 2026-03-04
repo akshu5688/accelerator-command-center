@@ -1,3 +1,4 @@
+import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -5,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { RoleProvider } from "@/contexts/RoleContext";
 import { AcceleratorLayout } from "@/components/accelerator/AcceleratorLayout";
+import Landing from "@/pages/Landing";
 import AcceleratorDashboard from "@/pages/accelerator/Dashboard";
 import Cohorts from "@/pages/accelerator/Cohorts";
 import StartupProfile from "@/pages/accelerator/StartupProfile";
@@ -22,14 +24,16 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
+    <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
       <RoleProvider>
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Navigate to="/accelerator/dashboard" replace />} />
+            <Route path="/" element={<Landing />} />
             <Route path="/accelerator" element={<AcceleratorLayout />}>
+              <Route index element={<Navigate to="/accelerator/dashboard" replace />} />
               <Route path="dashboard" element={<AcceleratorDashboard />} />
               <Route path="cohorts" element={<Cohorts />} />
               <Route path="cohorts/:cohortId/:startupId" element={<StartupProfile />} />
@@ -49,6 +53,7 @@ const App = () => (
         </BrowserRouter>
       </RoleProvider>
     </TooltipProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 
