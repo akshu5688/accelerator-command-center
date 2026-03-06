@@ -20,6 +20,7 @@ import Cohorts from "@/pages/accelerator/Cohorts";
 import StartupProfile from "@/pages/accelerator/StartupProfile";
 import Templates from "@/pages/accelerator/Templates";
 import Settings from "@/pages/accelerator/Settings";
+import InviteUser from "@/pages/accelerator/InviteUser";
 import ApplicationsHub from "@/pages/accelerator/applications/ApplicationsHub";
 import FormsIndex from "@/pages/accelerator/applications/FormsIndex";
 import FormBuilder from "@/pages/accelerator/applications/FormBuilder";
@@ -62,6 +63,7 @@ const App = () => (
               </Route>
               <Route path="templates" element={<Templates />} />
               <Route path="settings" element={<Settings />} />
+              <Route path="settings/invite" element={<InviteUser />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
