@@ -81,15 +81,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         },
       });
       if (error) throw error;
-      // When Confirm email is ON, Supabase does NOT give a session immediately.
-      // Never set user - always send to check-email page.
-      return { needsEmailConfirmation: true };
-    } else {
-      const userData: User = { email, name: email.split("@")[0] };
-      setUser(userData);
-      localStorage.setItem(AUTH_KEY, JSON.stringify(userData));
-      return { needsEmailConfirmation: false };
     }
+    // NEVER set user on signup - always send to check-email page.
+    // User must confirm (Supabase) or come back and log in (demo mode).
+    return { needsEmailConfirmation: true };
   };
 
   const logout = async () => {

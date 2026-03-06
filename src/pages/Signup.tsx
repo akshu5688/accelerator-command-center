@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,14 +13,8 @@ export default function Signup() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const { signup, isAuthenticated } = useAuth();
+  const { signup } = useAuth();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    if (isAuthenticated && !isSupabaseConfigured()) {
-      navigate("/accelerator/dashboard", { replace: true });
-    }
-  }, [isAuthenticated, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,12 +38,8 @@ export default function Signup() {
 
     setIsLoading(true);
     try {
-      const { needsEmailConfirmation } = await signup(email, password);
-      if (needsEmailConfirmation) {
-        navigate("/check-email", { state: { email }, replace: true });
-      } else {
-        navigate("/accelerator/dashboard", { replace: true });
-      }
+      await signup(email, password);
+      navigate("/check-email", { state: { email }, replace: true });
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Sign up failed. Please try again.");
     } finally {
@@ -122,7 +112,7 @@ export default function Signup() {
           </Button>
           {!isSupabaseConfigured() && (
             <p className="text-center text-xs text-muted-foreground">
-              Demo mode: No email confirmation required
+              Demo mode: No email sent. Go to Log in after signing up.
             </p>
           )}
         </form>

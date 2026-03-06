@@ -6,21 +6,32 @@ import { Zap, Loader2, CheckCircle2 } from "lucide-react";
 export default function AuthCallback() {
   const navigate = useNavigate();
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
     const handleCallback = async () => {
       if (!isSupabaseConfigured() || !supabase) {
         setStatus("error");
+        setErrorMsg("Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.");
         return;
       }
       try {
-        // Supabase already confirmed the email when user clicked the link.
-        // We do NOT setSession - user must come back and log in explicitly.
+        // Process hash/query params from Supabase redirect (email confirmation, OAuth, etc.)
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          setStatus("error");
+          setErrorMsg(error.message);
+          return;
+        }
+        // Clear hash from URL to avoid re-processing
+        if (window.location.hash) {
+          window.history.replaceState(null, "", window.location.pathname + window.location.search);
+        }
         setStatus("success");
-        window.history.replaceState(null, "", window.location.pathname);
         setTimeout(() => navigate("/login", { state: { emailConfirmed: true }, replace: true }), 2000);
-      } catch {
+      } catch (err) {
         setStatus("error");
+        setErrorMsg(err instanceof Error ? err.message : "Confirmation failed");
       }
     };
     handleCallback();
@@ -50,7 +61,9 @@ export default function AuthCallback() {
         {status === "error" && (
           <>
             <h1 className="text-2xl font-bold text-foreground">Confirmation failed</h1>
-            <p className="text-muted-foreground">The link may have expired. Please try signing up again.</p>
+            <p className="text-muted-foreground">
+              {errorMsg ?? "The link may have expired. Please try signing up again."}
+            </p>
             <button
               onClick={() => navigate("/signup")}
               className="text-accent hover:underline font-medium"
