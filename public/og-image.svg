@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" fill="none">
+  <rect width="1200" height="630" fill="#1A1A1A"/>
+  <rect x="56" y="56" width="1088" height="518" rx="24" fill="#242424" stroke="#333"/>
+  <rect x="96" y="96" width="72" height="72" rx="14" fill="#B88763"/>
+  <path d="M116 154V110H132.2C141.4 110 147.2 115.1 147.2 123.2C147.2 131.3 141.4 136.4 132.2 136.4H125.4V154H116Z" fill="white"/>
+  <path d="M150.5 154V110H159.8V146.1H175.5V154H150.5Z" fill="white" opacity=".95"/>
+  <text x="192" y="140" fill="white" font-family="Inter, Arial, sans-serif" font-size="44" font-weight="700">EERA Command Center</text>
+  <text x="96" y="234" fill="#CFCFCF" font-family="Inter, Arial, sans-serif" font-size="30">
+    Accelerator &amp; Incubator Management Platform
+  </text>
+  <text x="96" y="284" fill="#9E9E9E" font-family="Inter, Arial, sans-serif" font-size="24">
+    Manage cohorts, applications, and portfolio workflows in one place.
+  </text>
+</svg>
