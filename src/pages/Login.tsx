@@ -109,7 +109,7 @@ export default function Login() {
           </Button>
           {!isSupabaseConfigured() && (
             <p className="text-center text-xs text-muted-foreground">
-              Demo: Enter any email and password to sign in
+              Demo mode: Not connected to Supabase. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to connect.
             </p>
           )}
         </form>
