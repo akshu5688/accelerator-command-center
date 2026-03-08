@@ -28,6 +28,7 @@ import FormBuilder from "@/pages/accelerator/applications/FormBuilder";
 import FormResponses from "@/pages/accelerator/applications/FormResponses";
 import Pipeline from "@/pages/accelerator/applications/Pipeline";
 import ApplicationReview from "@/pages/accelerator/applications/ApplicationReview";
+import PublicForm from "@/pages/PublicForm";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -49,6 +50,7 @@ const App = () => (
             <Route path="/signup" element={<Signup />} />
             <Route path="/check-email" element={<CheckEmail />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
+            <Route path="/apply/:publishSlug" element={<PublicForm />} />
             <Route path="/invite/accept" element={<InviteAccept />} />
             <Route path="/accelerator" element={<ProtectedRoute><AcceleratorLayout /></ProtectedRoute>}>
               <Route index element={<Navigate to="/accelerator/dashboard" replace />} />

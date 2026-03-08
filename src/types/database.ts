@@ -120,6 +120,7 @@ export type Database = {
           required: boolean;
           sort_order: number;
           type: string;
+          version: number;
         };
         Insert: {
           created_at?: string;
@@ -131,6 +132,7 @@ export type Database = {
           required?: boolean;
           sort_order?: number;
           type: string;
+          version?: number;
         };
         Update: {
           created_at?: string;
@@ -142,6 +144,7 @@ export type Database = {
           required?: boolean;
           sort_order?: number;
           type?: string;
+          version?: number;
         };
       };
       forms: {
@@ -151,8 +154,11 @@ export type Database = {
           description: string | null;
           id: string;
           name: string;
+          publish_slug: string | null;
           publish_link: string | null;
+          published_at: string | null;
           status: string;
+          version: number;
           workspace_id: string;
         };
         Insert: {
@@ -161,8 +167,11 @@ export type Database = {
           description?: string | null;
           id?: string;
           name: string;
+          publish_slug?: string | null;
           publish_link?: string | null;
+          published_at?: string | null;
           status?: string;
+          version?: number;
           workspace_id: string;
         };
         Update: {
@@ -171,8 +180,11 @@ export type Database = {
           description?: string | null;
           id?: string;
           name?: string;
+          publish_slug?: string | null;
           publish_link?: string | null;
+          published_at?: string | null;
           status?: string;
+          version?: number;
           workspace_id?: string;
         };
       };

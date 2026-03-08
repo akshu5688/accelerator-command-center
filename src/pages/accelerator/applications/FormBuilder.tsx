@@ -90,6 +90,17 @@ function getQuestionValueOptions(question: Question | undefined): string[] | nul
   return null;
 }
 
+function generatePublishSlug(title: string, fallbackId?: string | null): string {
+  const base = title
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 48);
+  const suffix = (fallbackId ?? crypto.randomUUID()).replace(/-/g, "").slice(0, 8);
+  return `${base || "form"}-${suffix}`;
+}
+
 export default function FormBuilder() {
   const navigate = useNavigate();
   const { formId } = useParams();
@@ -101,6 +112,7 @@ export default function FormBuilder() {
   const [selected, setSelected] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [deadline, setDeadline] = useState("");
   const [isDraft, setIsDraft] = useState(true);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [previewAnswers, setPreviewAnswers] = useState<Record<string, string>>({});
@@ -126,6 +138,7 @@ export default function FormBuilder() {
       if (form) {
         setTitle(form.name);
         setDescription(form.description ?? "");
+        setDeadline(form.deadline ? form.deadline.slice(0, 10) : "");
         setIsDraft(form.status !== "open");
       }
       if (qs && qs.length > 0) {
@@ -149,15 +162,56 @@ export default function FormBuilder() {
     mutationFn: async (publish: boolean) => {
       if (!supabase || !workspaceId) return;
 
+      const cleanTitle = title.trim();
+      const cleanDescription = description.trim();
+      const requiredWithoutLabel = questions.some(
+        (q) => q.type !== "section_header" && q.required && !q.label.trim(),
+      );
+
+      if (publish) {
+        if (!cleanTitle) throw new Error("Form title is required before publishing.");
+        if (questions.length === 0) throw new Error("Add at least one question before publishing.");
+        if (requiredWithoutLabel) throw new Error("Required questions must have labels.");
+      }
+
+      if (deadline && Number.isNaN(new Date(`${deadline}T00:00:00.000Z`).getTime())) {
+        throw new Error("Deadline is invalid.");
+      }
+
       let activeFormId = formId;
+      let existingVersion = 1;
+      let existingSlug: string | null = null;
+
+      if (!isNew && formId) {
+        const { data: existing, error: existingError } = await supabase
+          .from("forms")
+          .select("version, publish_slug")
+          .eq("id", formId)
+          .eq("workspace_id", workspaceId)
+          .single();
+        if (existingError) throw existingError;
+        existingVersion = existing?.version ?? 1;
+        existingSlug = existing?.publish_slug ?? null;
+      }
+
+      const nextVersion = publish ? existingVersion + (isNew ? 0 : 1) : existingVersion;
+      const publishSlug = publish ? (existingSlug ?? generatePublishSlug(cleanTitle, activeFormId)) : existingSlug;
+      const publishLink = publishSlug ? `${window.location.origin}/apply/${publishSlug}` : null;
+      const publishedAt = publish ? new Date().toISOString() : null;
+
       if (isNew) {
         const { data: inserted, error: insertError } = await supabase
           .from("forms")
           .insert({
             workspace_id: workspaceId,
-            name: title.trim(),
-            description: description || null,
+            name: cleanTitle,
+            description: cleanDescription || null,
+            deadline: deadline || null,
             status: publish ? "open" : "draft",
+            published_at: publishedAt,
+            publish_slug: publishSlug,
+            publish_link: publishLink,
+            version: nextVersion,
           })
           .select("id")
           .single();
@@ -167,9 +221,14 @@ export default function FormBuilder() {
         const { error: updateError } = await supabase
           .from("forms")
           .update({
-            name: title.trim(),
-            description: description || null,
+            name: cleanTitle,
+            description: cleanDescription || null,
+            deadline: deadline || null,
             status: publish ? "open" : "draft",
+            published_at: publish ? publishedAt : undefined,
+            publish_slug: publish ? publishSlug : undefined,
+            publish_link: publish ? publishLink : undefined,
+            version: publish ? nextVersion : existingVersion,
           })
           .eq("id", formId)
           .eq("workspace_id", workspaceId);
@@ -190,6 +249,7 @@ export default function FormBuilder() {
             required: q.required,
             description: q.description || null,
             options: serializeQuestionOptions(q),
+            version: publish ? nextVersion : existingVersion,
           })),
         );
         if (questionInsertError) throw questionInsertError;
@@ -372,6 +432,15 @@ export default function FormBuilder() {
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Optional description..."
               />
+              <div className="pt-3 max-w-xs">
+                <Label className="text-xs text-muted-foreground">Close date (optional)</Label>
+                <Input
+                  type="date"
+                  className="mt-1 h-8 text-sm"
+                  value={deadline}
+                  onChange={(e) => setDeadline(e.target.value)}
+                />
+              </div>
             </div>
 
             {questions.map((q) => (

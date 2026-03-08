@@ -6,24 +6,28 @@ import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
 import { useRole } from "@/contexts/RoleContext";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import { useToast } from "@/hooks/use-toast";
 import { Plus, Search, Copy, Archive, ExternalLink, FileText } from "lucide-react";
 
 interface AppForm {
   id: string;
   name: string;
-  status: "open" | "closed" | "draft";
+  status: "open" | "closed" | "draft" | "archived";
   responses: number;
   deadline: string;
   created: string;
   publishLink: string;
+  version: number;
+  publishedAt: string;
 }
 
 const statusStyles: Record<string, string> = {
   open: "bg-success/10 text-success",
   closed: "bg-muted text-muted-foreground",
   draft: "bg-warning/10 text-warning",
+  archived: "bg-slate-200 text-slate-600",
 };
 
 export default function FormsIndex() {
@@ -31,6 +35,8 @@ export default function FormsIndex() {
   const { canAccess } = useRole();
   const { workspaceId } = useWorkspace();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
   const { data: forms = [] } = useQuery({
     queryKey: ["forms", workspaceId],
     enabled: !!workspaceId && !!supabase,
@@ -54,8 +60,26 @@ export default function FormsIndex() {
         responses: appCounts.get(f.id) ?? 0,
         deadline: f.deadline ? new Date(f.deadline).toLocaleDateString() : "—",
         created: new Date(f.created_at).toLocaleDateString(),
-        publishLink: f.publish_link ?? "",
+        publishLink:
+          f.publish_link ?? (f.publish_slug ? `${window.location.origin}/apply/${f.publish_slug}` : ""),
+        version: f.version ?? 1,
+        publishedAt: f.published_at ? new Date(f.published_at).toLocaleDateString() : "—",
       }));
+    },
+  });
+
+  const setStatusMutation = useMutation({
+    mutationFn: async ({ formId, status }: { formId: string; status: AppForm["status"] }) => {
+      if (!supabase || !workspaceId) return;
+      const { error } = await supabase
+        .from("forms")
+        .update({ status })
+        .eq("workspace_id", workspaceId)
+        .eq("id", formId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["forms", workspaceId] });
     },
   });
 
@@ -128,17 +152,58 @@ export default function FormsIndex() {
                     <p className="text-sm font-medium">{form.deadline}</p>
                   </div>
                 </div>
+                <div className="text-xs text-muted-foreground mb-3">
+                  Version {form.version} • Published {form.publishedAt}
+                </div>
 
                 <div className="flex items-center gap-2 border-t pt-3" onClick={(e) => e.stopPropagation()}>
                   {form.publishLink && (
-                    <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 text-muted-foreground">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-xs gap-1 text-muted-foreground"
+                      onClick={() => window.open(form.publishLink, "_blank", "noopener,noreferrer")}
+                    >
                       <ExternalLink className="h-3 w-3" /> Link
                     </Button>
                   )}
-                  <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 text-muted-foreground">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 text-xs gap-1 text-muted-foreground"
+                    onClick={async () => {
+                      if (!form.publishLink) return;
+                      await navigator.clipboard.writeText(form.publishLink);
+                      toast({ title: "Link copied", description: "Publish link copied to clipboard." });
+                    }}
+                  >
                     <Copy className="h-3 w-3" /> Duplicate
                   </Button>
-                  <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 text-muted-foreground">
+                  {form.status === "open" ? (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-xs gap-1 text-muted-foreground"
+                      onClick={() => setStatusMutation.mutate({ formId: form.id, status: "closed" })}
+                    >
+                      Close
+                    </Button>
+                  ) : form.status === "closed" ? (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-xs gap-1 text-muted-foreground"
+                      onClick={() => setStatusMutation.mutate({ formId: form.id, status: "open" })}
+                    >
+                      Reopen
+                    </Button>
+                  ) : null}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 text-xs gap-1 text-muted-foreground"
+                    onClick={() => setStatusMutation.mutate({ formId: form.id, status: "archived" })}
+                  >
                     <Archive className="h-3 w-3" /> Archive
                   </Button>
                 </div>
