@@ -45,3 +45,28 @@ In **Authentication** → **Providers** → **Email**:
 ## Verify
 
 After redeploying, sign up with a new email. The user should appear in Supabase → **Authentication** → **Users**.
+
+---
+
+## Edge Function Secrets (for Send Invite)
+
+The `send-invite` Edge Function needs Resend API credentials to send invite emails.
+
+### Option A: Supabase Dashboard
+
+1. Open [Supabase Dashboard](https://supabase.com/dashboard) → your project
+2. Go to **Edge Functions** → **Secrets** (or **Project Settings** → **Edge Functions**)
+3. Add these secrets:
+   - `RESEND_API_KEY` = your Resend API key (from [resend.com](https://resend.com))
+   - `RESEND_FROM_EMAIL` = `ERRA Accelerator <onboarding@resend.dev>` (or your verified domain, e.g. `noreply@yourdomain.com`)
+
+### Option B: Supabase CLI
+
+```bash
+supabase login
+supabase link --project-ref YOUR_PROJECT_REF
+supabase secrets set RESEND_API_KEY=re_your_key_here
+supabase secrets set RESEND_FROM_EMAIL="ERRA Accelerator <onboarding@resend.dev>"
+```
+
+**Note:** `onboarding@resend.dev` works for testing. For production, verify your domain in Resend and use a custom from address.

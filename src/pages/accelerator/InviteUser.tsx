@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Mail, Send } from "lucide-react";
+import { FunctionsHttpError } from "@supabase/functions-js";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,6 +12,22 @@ import { useRole } from "@/contexts/RoleContext";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
+
+async function getInviteErrorMessage(error: unknown): Promise<string> {
+  if (error instanceof FunctionsHttpError && error.context) {
+    try {
+      const body = (await error.context.json()) as { error?: string; details?: string | object } | null;
+      if (body?.error) {
+        const details = body.details;
+        const detailsStr = typeof details === "string" ? details : details && typeof details === "object" && "message" in details ? String((details as { message?: string }).message) : details ? JSON.stringify(details) : "";
+        return detailsStr ? `${body.error}: ${detailsStr}` : body.error;
+      }
+    } catch {
+      // ignore parse errors
+    }
+  }
+  return error instanceof Error ? error.message : "Could not send invite.";
+}
 
 type InviteRole = "program_manager" | "mentor";
 
@@ -30,56 +47,51 @@ export default function InviteUser() {
       if (!workspaceId) throw new Error("No active workspace selected.");
       if (!name.trim() || !email.trim()) throw new Error("Name and email are required.");
 
-      const invitedEmail = email.trim().toLowerCase();
-
-      const { error: memberError } = await supabase.from("team_members").upsert(
-        {
-          workspace_id: workspaceId,
-          name: name.trim(),
-          email: invitedEmail,
-          role: inviteRole,
-          status: "invited",
-        },
-        { onConflict: "workspace_id,email" },
-      );
-      if (memberError) throw memberError;
-
-      // If this email already has an account, activate access immediately.
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("email", invitedEmail)
-        .maybeSingle();
-      if (profileError) throw profileError;
-
-      if (profile?.id) {
-        const { error: roleError } = await supabase.from("user_roles").upsert(
-          {
-            user_id: profile.id,
-            workspace_id: workspaceId,
-            role: inviteRole,
-          },
-          { onConflict: "user_id,workspace_id" },
-        );
-        if (roleError) throw roleError;
-
-        const { error: activateError } = await supabase
-          .from("team_members")
-          .update({ status: "active", role: inviteRole })
-          .eq("workspace_id", workspaceId)
-          .eq("email", invitedEmail);
-        if (activateError) throw activateError;
+      // Ensure we send a fresh JWT to the edge function.
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+      if (userError || !user) {
+        throw new Error("Your session expired. Please sign in again and resend the invite.");
       }
 
-      return { invitedEmail, existingUser: !!profile?.id };
+      const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
+      if (refreshError || !refreshed.session?.access_token) {
+        throw new Error("Could not refresh session. Please sign in again.");
+      }
+      const session = refreshed.session;
+
+      const { data, error } = await supabase.functions.invoke("send-invite", {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: {
+          workspaceId,
+          name: name.trim(),
+          email: email.trim().toLowerCase(),
+          role: inviteRole,
+        },
+      });
+
+      if (error) {
+        const message = await getInviteErrorMessage(error);
+        throw new Error(message);
+      }
+
+      const response = data as { error?: string; details?: string; email?: string } | null;
+      if (response?.error) {
+        const msg = response.details ? `${response.error}: ${response.details}` : response.error;
+        throw new Error(msg);
+      }
+
+      return { invitedEmail: response?.email ?? email.trim().toLowerCase() };
     },
-    onSuccess: ({ invitedEmail, existingUser }) => {
+    onSuccess: ({ invitedEmail }) => {
       queryClient.invalidateQueries({ queryKey: ["team-members", workspaceId] });
       toast({
-        title: existingUser ? "User access granted" : "Invite created",
-        description: existingUser
-          ? `${invitedEmail} was added to this workspace.`
-          : `${invitedEmail} is now listed as invited in team members.`,
+        title: "Invite sent",
+        description: `Invite sent to ${invitedEmail}`,
       });
       setName("");
       setEmail("");
